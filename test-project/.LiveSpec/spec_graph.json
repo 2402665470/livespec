@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "name": "Test Project",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "group-auth",
+      "category": "group",
+      "label": "Authentication System",
+      "status": "pending",
+      "parentId": null,
+      "description": "3 nodes"
+    },
+    {
+      "id": "node-login",
+      "category": "spec",
+      "label": "User Login",
+      "status": "verified",
+      "parentId": "group-auth"
+    },
+    {
+      "id": "node-register",
+      "category": "spec",
+      "label": "User Registration",
+      "status": "verified",
+      "parentId": "group-auth"
+    },
+    {
+      "id": "node-password-reset",
+      "category": "spec",
+      "label": "Password Reset",
+      "status": "pending",
+      "parentId": "group-auth"
+    },
+    {
+      "id": "group-api",
+      "category": "group",
+      "label": "API Layer",
+      "status": "approved",
+      "parentId": null,
+      "description": "2 nodes"
+    },
+    {
+      "id": "node-rest-api",
+      "category": "spec",
+      "label": "REST Endpoints",
+      "status": "verified",
+      "parentId": "group-api"
+    },
+    {
+      "id": "node-graphql-api",
+      "category": "spec",
+      "label": "GraphQL API",
+      "status": "broken",
+      "parentId": "group-api"
+    },
+    {
+      "id": "node-database",
+      "category": "spec",
+      "label": "Database Schema",
+      "status": "verified",
+      "parentId": null
+    },
+    {
+      "id": "node-frontend",
+      "category": "spec",
+      "label": "Frontend Components",
+      "status": "pending",
+      "parentId": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "node-login",
+      "to": "node-database",
+      "label": "queries"
+    },
+    {
+      "from": "node-register",
+      "to": "node-database",
+      "label": "inserts"
+    },
+    {
+      "from": "node-frontend",
+      "to": "group-auth",
+      "label": "uses"
+    },
+    {
+      "from": "node-frontend",
+      "to": "group-api",
+      "label": "calls"
+    },
+    {
+      "from": "node-rest-api",
+      "to": "node-database",
+      "label": "CRUD"
+    },
+    {
+      "from": "node-graphql-api",
+      "to": "node-database",
+      "label": "queries"
+    }
+  ]
+}

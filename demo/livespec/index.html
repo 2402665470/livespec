@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiveSpec</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+      // Global error handler utility
+      window.showCrashScreen = function(message, details) {
+        document.body.innerHTML = `
+          <div style="padding: 20px; color: #ef4444; background: #111827; font-family: monospace; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="max-width: 800px; width: 100%;">
+              <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #f87171;">Application Crashed</h2>
+              <div style="background: #1f2937; padding: 1.5rem; border-radius: 0.5rem; overflow: auto; border: 1px solid #374151;">
+                <p style="font-weight: bold; margin-bottom: 0.5rem; color: #e5e7eb;">${message}</p>
+                <p style="color: #9ca3af; font-size: 0.9rem;">${details || 'No details available'}</p>
+              </div>
+              <button onclick="window.location.reload()" style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
+                Reload Application
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      // 1. Capture synchronous errors
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Global Error:", message, error);
+        window.showCrashScreen(message, `${source}:${lineno}`);
+      };
+
+      // 2. Capture async/promise errors (Critical for importmap failures)
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error("Unhandled Rejection:", event.reason);
+        window.showCrashScreen("Async/Promise Error", event.reason ? event.reason.toString() : "Unknown promise rejection");
+      });
+
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              gray: {
+                850: '#1f2937', 
+                900: '#111827',
+                950: '#030712',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .dark-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .dark-scrollbar::-webkit-scrollbar-track {
+        background: #1f2937; 
+      }
+      .dark-scrollbar::-webkit-scrollbar-thumb {
+        background: #4b5563; 
+        border-radius: 4px;
+      }
+      .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #6b7280; 
+      }
+      .grid-pattern {
+        background-size: 40px 40px;
+        background-image: linear-gradient(to right, #ffffff05 1px, transparent 1px),
+                          linear-gradient(to bottom, #ffffff05 1px, transparent 1px);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "phosphor-react": "https://esm.sh/phosphor-react@1.4.1?deps=react@18.2.0",
+    "dagre": "https://esm.sh/dagre@0.8.5",
+    "panzoom": "https://esm.sh/panzoom@9.4.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-900 text-white overflow-hidden">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

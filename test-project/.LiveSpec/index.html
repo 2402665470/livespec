@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiveSpec Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #0a0a0a;
+      color: #e5e5e5;
+    }
+    h1 {
+      color: #22d3ee;
+    }
+    .status-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+    }
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    .label {
+      color: #a3a3a3;
+    }
+    .value {
+      font-family: monospace;
+      color: #22d3ee;
+    }
+    .success {
+      color: #4ade80;
+    }
+    .warning {
+      color: #fbbf24;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 LiveSpec HTML Injection Test</h1>
+
+  <div class="status-box">
+    <div class="status-item">
+      <span class="label">Test Purpose:</span>
+      <span class="value">Verify bridge script injection</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Expected Behavior:</span>
+      <span class="value">Script auto-injected before &lt;/body&gt;</span>
+    </div>
+  </div>
+
+  <div class="status-box">
+    <h2 style="margin-top: 0;">Injection Status</h2>
+    <div class="status-item">
+      <span class="label">Bridge Loaded:</span>
+      <span class="value" id="bridge-status">Checking...</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Initialization Flag:</span>
+      <span class="value" id="init-flag">Checking...</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Bridge Version:</span>
+      <span class="value" id="bridge-version">Checking...</span>
+    </div>
+  </div>
+
+  <div class="status-box">
+    <h2 style="margin-top: 0;">DOM Inspection</h2>
+    <div class="status-item">
+      <span class="label">Script Tags Found:</span>
+      <span class="value" id="script-count">Checking...</span>
+    </div>
+    <div class="status-item">
+      <span class="label">Bridge Script Present:</span>
+      <span class="value" id="bridge-present">Checking...</span>
+    </div>
+  </div>
+
+  <script>
+    // Check if bridge was injected and initialized
+    setTimeout(() => {
+      const bridgeStatus = document.getElementById('bridge-status');
+      const initFlag = document.getElementById('init-flag');
+      const bridgeVersion = document.getElementById('bridge-version');
+      const scriptCount = document.getElementById('script-count');
+      const bridgePresent = document.getElementById('bridge-present');
+
+      // Check initialization flag
+      if (window.__LIVESPEC_INITIALIZED__) {
+        bridgeStatus.textContent = '✓ Yes';
+        bridgeStatus.className = 'value success';
+        initFlag.textContent = '✓ true';
+        initFlag.className = 'value success';
+
+        // Check bridge object
+        if (window.__LIVESPEC_BRIDGE__) {
+          bridgeVersion.textContent = window.__LIVESPEC_BRIDGE__.version || 'N/A';
+          bridgeVersion.className = 'value success';
+        } else {
+          bridgeVersion.textContent = '⚠ Bridge object missing';
+          bridgeVersion.className = 'value warning';
+        }
+      } else {
+        bridgeStatus.textContent = '✗ Not loaded';
+        bridgeStatus.className = 'value warning';
+        initFlag.textContent = '✗ false';
+        initFlag.className = 'value warning';
+        bridgeVersion.textContent = 'N/A';
+      }
+
+      // Count script tags
+      const scripts = document.querySelectorAll('script');
+      scriptCount.textContent = scripts.length.toString();
+
+      // Check if bridge script is present
+      const bridgeScript = Array.from(scripts).find(s =>
+        s.src.includes('/__livespec/client.js')
+      );
+
+      if (bridgeScript) {
+        bridgePresent.textContent = '✓ Yes';
+        bridgePresent.className = 'value success';
+      } else {
+        bridgePresent.textContent = '✗ Not found';
+        bridgePresent.className = 'value warning';
+      }
+
+      console.log('[Test Page] Injection test complete');
+      console.log('[Test Page] __LIVESPEC_INITIALIZED__:', window.__LIVESPEC_INITIALIZED__);
+      console.log('[Test Page] __LIVESPEC_BRIDGE__:', window.__LIVESPEC_BRIDGE__);
+    }, 100);
+  </script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+/**
+ * LiveSpec Global Styles
+ *
+ * STANDARD TAILWIND DIRECTIVES (Required for Tailwind CSS to work)
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   MARK: Custom Base Styles
+   ============================================================================ */
+
+/* System font stack */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Monospace font stack for code */
+code, pre, .font-mono, [class*="font-mono"] {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+}
+
+/* ============================================================================
+   MARK: Dark Scrollbar (from demo)
+   ============================================================================ */
+
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Apply dark scrollbar globally */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+/* ============================================================================
+   MARK: Grid Pattern (from demo)
+   ============================================================================ */
+
+.grid-pattern {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, #ffffff05 1px, transparent 1px),
+                    linear-gradient(to bottom, #ffffff05 1px, transparent 1px);
+}
+
+/* ============================================================================
+   MARK: Reflex Splitter Styling (Beautified)
+   ============================================================================ */
+
+/* Custom splitter styling */
+.reflex-splitter {
+  background-color: #d1d5db !important; /* gray-300 */
+  transition: background-color 0.2s ease, width 0.2s ease;
+}
+
+.reflex-splitter:hover {
+  background-color: #06b6d4 !important; /* cyan-500 */
+  width: 6px !important;
+}
+
+/* Dragging state */
+.reflex-splitter.active {
+  background-color: #0891b2 !important; /* cyan-600 */
+  width: 6px !important;
+}
+
+/* Grip handle indicator (optional visual cue) */
+.reflex-splitter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 32px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.reflex-splitter:hover::after {
+  opacity: 1;
+}
