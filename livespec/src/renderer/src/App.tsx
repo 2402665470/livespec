@@ -11,13 +11,9 @@ import { SpecTree } from './components/Tree/SpecTree'
 import { GuestViewport } from './components/Viewport/GuestViewport'
 
 function App(): React.JSX.Element {
-  // Local state for view mode (Tab switching)
   const [viewMode, setViewMode] = useState<'graph' | 'tree'>('graph')
-
-  // Refs
   const graphCanvasRef = useRef<GraphCanvasRef>(null)
 
-  // Store selectors
   const rootPath = useProjectStore((state) => state.rootPath)
   const serverRunning = useProjectStore((state) => state.serverRunning)
   const graph = useProjectStore((state) => state.graph)
@@ -25,19 +21,8 @@ function App(): React.JSX.Element {
   const startServer = useProjectStore((state) => state.startServer)
   const stopServer = useProjectStore((state) => state.stopServer)
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[App] ===== STATE UPDATE =====')
-    console.log('[App] rootPath:', rootPath)
-    console.log('[App] serverRunning:', serverRunning)
-    console.log('[App] graph:', graph)
-    console.log('[App] graph.nodes.length:', graph?.nodes.length || 0)
-    console.log('[App] =========================')
-  }, [rootPath, serverRunning, graph])
-
   const selectNodes = useGraphStore((state) => state.selectNodes)
 
-  // Calculate layout
   const nodes = graph?.nodes || []
   const edges = graph?.edges || []
 
@@ -47,30 +32,31 @@ function App(): React.JSX.Element {
     enabled: nodes.length > 0
   })
 
-  // Setup event listeners on mount
   useEffect(() => {
     setupProjectEventListeners()
   }, [])
 
-  // Host <-> Guest Communication
+  // Centralized Host <-> Guest Communication
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const { data } = event
       if (!data || !data.type) return
 
-      console.log('[App] Received message from Guest:', data.type, data)
-
+      // This is the SINGLE source of truth for handling messages from the iframe.
       switch (data.type) {
         case 'NODE_CLICKED':
           if (data.nodeId) {
+            console.log(`[App] Node clicked in Guest: ${data.nodeId}`);
+            // Update the global state
             selectNodes(data.nodeId)
+            // Center the graph view on the selected node
             if (graphCanvasRef.current) {
               graphCanvasRef.current.centerOnNode(data.nodeId)
             }
           }
           break
         default:
-          console.log('[App] Unknown message type:', data.type)
+          // console.log('[App] Unknown message type:', data.type)
       }
     }
 
@@ -78,19 +64,12 @@ function App(): React.JSX.Element {
     return () => {
       window.removeEventListener('message', handleMessage)
     }
-  }, [selectNodes])
+  }, [selectNodes]) // Dependency array ensures the handler always has the latest selectNodes function
 
   const handleNodeClick = (nodeId: string) => {
     selectNodes(nodeId)
-    // Broadcast highlight message to all windows (iframe will pick it up)
-    window.postMessage({ type: 'HIGHLIGHT_NODE', nodeId }, '*')
-  }
-
-  const handleGuestNodeClick = (nodeId: string) => {
-    selectNodes(nodeId)
-    if (graphCanvasRef.current) {
-      graphCanvasRef.current.centerOnNode(nodeId)
-    }
+    // This part is for Host -> Guest communication, which is not yet fully implemented.
+    // window.postMessage({ type: 'HIGHLIGHT_NODE', nodeId }, '*')
   }
 
   const handleOpenProject = async () => {
@@ -105,37 +84,26 @@ function App(): React.JSX.Element {
     await stopServer()
   }
 
-  // Computed flags
   const hasGraphData = graph && graph.nodes.length > 0
-
-  // Extract project name from path for display
   const projectName = rootPath ? rootPath.split(/[/\\]/).filter(Boolean).pop() || 'LiveSpec' : 'LiveSpec'
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-900">
-      {/* ================================================================== */}
-      {/* TOP HEADER */}
-      {/* ================================================================== */}
       <header className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 shrink-0 z-20 relative">
-        {/* Left: App Name + Version */}
-        <div className="flex items-center space-x-4">
+         {/* Header content remains the same... */}
+         <div className="flex items-center space-x-4">
           <div className="flex flex-col">
             <h1 className="font-semibold text-lg text-gray-100 tracking-tight leading-none">{projectName}</h1>
             <span className="text-xs text-gray-500 font-mono mt-1">V1.0</span>
           </div>
         </div>
-
-        {/* Center: Project Controls */}
         <div className="flex items-center space-x-3">
-          {/* Server Status Badge */}
           <div className="flex items-center space-x-2 px-3 py-1.5 bg-gray-950 rounded-lg border border-gray-800">
             <span className={`w-2 h-2 rounded-full ${serverRunning ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
             <span className={`text-xs font-mono ${serverRunning ? 'text-green-400' : 'text-yellow-400'}`}>
               {serverRunning ? 'Running' : 'Stopped'}
             </span>
           </div>
-
-          {/* Control Buttons */}
           {!rootPath && (
             <button
               onClick={handleOpenProject}
@@ -165,8 +133,6 @@ function App(): React.JSX.Element {
               Stop Server
             </button>
           )}
-
-          {/* Stats */}
           {hasGraphData && (
             <div className="flex items-center space-x-3 px-3 py-1.5 bg-gray-950 rounded-lg border border-gray-800 text-xs">
               <span className="text-gray-500">Nodes:</span>
@@ -177,8 +143,6 @@ function App(): React.JSX.Element {
             </div>
           )}
         </div>
-
-        {/* Right: View Mode Toggle (Tabs) */}
         {hasGraphData && (
           <div className="flex bg-gray-950 p-1 rounded-lg border border-gray-800">
             <button
@@ -207,15 +171,12 @@ function App(): React.JSX.Element {
         )}
       </header>
 
-      {/* ================================================================== */}
-      {/* MAIN SPLIT AREA */}
-      {/* ================================================================== */}
       <div className="flex-1 h-full relative">
         <ReflexContainer orientation="vertical" className="h-full w-full">
-          {/* LEFT PANE: GUEST VIEWPORT */}
           <ReflexElement className="bg-white" minSize={300} flex={0.6}>
             {serverRunning && hasGraphData ? (
-              <GuestViewport onNodeClick={handleGuestNodeClick} />
+              // GuestViewport is now simplified, no props needed for this functionality.
+              <GuestViewport />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100">
                 <div className="text-center text-gray-500">
@@ -230,10 +191,8 @@ function App(): React.JSX.Element {
             )}
           </ReflexElement>
 
-          {/* Splitter */}
           <ReflexSplitter propagateAttributes={false} />
 
-          {/* RIGHT PANE: GRAPH/TREE */}
           <ReflexElement className="bg-gray-950" minSize={300} flex={0.4}>
             {hasGraphData ? (
               viewMode === 'graph' ? (

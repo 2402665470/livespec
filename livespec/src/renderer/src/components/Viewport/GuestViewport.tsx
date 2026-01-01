@@ -1,69 +1,38 @@
 /**
- * GuestViewport Component
+ * GuestViewport Component (Refactored)
  *
- * Renders the user's HTML prototype in an iframe
- * Handles bi-directional communication with the host
- * Icons: Phosphor (matching prototype)
+ * Renders the user's HTML prototype in an iframe.
+ * This component is now simplified and no longer handles message listening itself.
+ * All communication is handled by the parent App component.
  */
 
-import { useEffect, useRef, useState } from 'react'
-import { Globe } from 'phosphor-react'
-import { useProjectStore } from '../../stores/project-store'
+import { useEffect, useRef, useState } from 'react';
+import { Globe } from 'phosphor-react';
+import { useProjectStore } from '../../stores/project-store';
 
-interface GuestViewportProps {
-  onNodeClick?: (nodeId: string) => void
-}
+// The onNodeClick prop is no longer needed.
+interface GuestViewportProps {}
 
-export function GuestViewport({ onNodeClick }: GuestViewportProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  const httpPort = useProjectStore((state) => state.httpPort)
-  const serverRunning = useProjectStore((state) => state.serverRunning)
-  const [iframeLoaded, setIframeLoaded] = useState(false)
+export function GuestViewport({}: GuestViewportProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const httpPort = useProjectStore((state) => state.httpPort);
+  const serverRunning = useProjectStore((state) => state.serverRunning);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
-  // Listen for messages from the iframe (Guest → Host)
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { data } = event
-      if (!data || !data.type) return
+  // The message listener logic has been removed from this component.
+  // It is now centralized in App.tsx to avoid redundancy and bugs.
 
-      console.log('[GuestViewport] Received message:', data.type, data)
-
-      switch (data.type) {
-        case 'NODE_CLICKED':
-          if (data.nodeId && onNodeClick) {
-            onNodeClick(data.nodeId)
-          }
-          break
-
-        case 'GRAPH_UPDATED':
-          console.log('[GuestViewport] Graph updated:', data.graph)
-          break
-
-        default:
-          console.log('[GuestViewport] Unknown message type:', data.type)
-      }
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => {
-      window.removeEventListener('message', handleMessage)
-    }
-  }, [onNodeClick])
-
-  // Handle iframe load
   const handleIframeLoad = () => {
-    console.log('[GuestViewport] Iframe loaded')
-    setIframeLoaded(true)
-  }
+    console.log('[GuestViewport] Iframe loaded');
+    setIframeLoaded(true);
+  };
 
-  // Construct iframe URL
   const iframeUrl = serverRunning
-    ? `http://localhost:${httpPort}/interactive-test.html`
-    : 'about:blank'
+    ? `http://localhost:${httpPort}` // The prototype should handle the default page
+    : 'about:blank';
 
   return (
     <div className="w-full h-full bg-white relative">
-      {/* Iframe */}
       <iframe
         ref={iframeRef}
         src={iframeUrl}
@@ -73,7 +42,6 @@ export function GuestViewport({ onNodeClick }: GuestViewportProps) {
         sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
       />
 
-      {/* Loading indicator */}
       {!iframeLoaded && serverRunning && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mb-4"></div>
@@ -81,7 +49,6 @@ export function GuestViewport({ onNodeClick }: GuestViewportProps) {
         </div>
       )}
 
-      {/* Empty state */}
       {!serverRunning && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
           <Globe size={64} weight="thin" className="text-gray-400 mb-4" />
@@ -92,5 +59,5 @@ export function GuestViewport({ onNodeClick }: GuestViewportProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
