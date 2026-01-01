@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Globe } from 'phosphor-react';
 import { useProjectStore } from '../../stores/project-store';
 
-// The onNodeClick prop is no longer needed.
 interface GuestViewportProps {}
 
 export function GuestViewport({}: GuestViewportProps) {
@@ -19,16 +18,15 @@ export function GuestViewport({}: GuestViewportProps) {
   const serverRunning = useProjectStore((state) => state.serverRunning);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
-  // The message listener logic has been removed from this component.
-  // It is now centralized in App.tsx to avoid redundancy and bugs.
-
   const handleIframeLoad = () => {
     console.log('[GuestViewport] Iframe loaded');
     setIframeLoaded(true);
   };
 
+  // FIX: Restore the correct, explicit URL to the interactive prototype file.
+  // Relying on the server's default file serving is fragile.
   const iframeUrl = serverRunning
-    ? `http://localhost:${httpPort}` // The prototype should handle the default page
+    ? `http://localhost:${httpPort}/interactive-test.html`
     : 'about:blank';
 
   return (
