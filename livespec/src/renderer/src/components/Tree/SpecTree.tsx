@@ -1,156 +1,160 @@
 /**
- * SpecTree Component
+ * SpecTree Component (Refactored to match Demo Prototype)
  *
- * Displays the spec graph as a hierarchical tree
- * Features:
- * - Recursive tree structure
- * - Expand/collapse groups
- * - Click to select
- * - Icon indicators (Phosphor - matching prototype)
+ * Displays the spec graph as a hierarchical tree, matching the visual fidelity
+ * and interaction design of the `demo/livespec` prototype.
  */
+import { useState, useMemo } from 'react';
+import { 
+  CaretRight, 
+  CaretDown, 
+  Folder, 
+  File,
+  CheckCircle,
+  WarningCircle,
+  Circle
+} from 'phosphor-react';
+import type { SpecNode } from '../../../../shared/types';
+import { useGraphStore } from '../../stores/graph-store';
+import { buildTree, type TreeNode } from '../../hooks/useAutoLayout';
+import { clsx } from 'clsx';
 
-import { useMemo } from 'react'
-import { CaretRight, CaretDown, Folder, File } from 'phosphor-react'
-import type { SpecNode } from '../../../../shared/types'
-import { useGraphStore } from '../../stores/graph-store'
-import { buildTree, type TreeNode } from '../../hooks/useAutoLayout'
+// ===========================================================================
+// MARK: StatusIcon Component (from Demo)
+// ===========================================================================
 
-// ============================================================================
-// MARK: TreeItem Component (Recursive)
-// ============================================================================
+const StatusIcon = ({ status, category }: { status: string; category: string }) => {
+  if (category === 'group') {
+    return <Folder size={18} weight="fill" className="text-blue-400" />;
+  }
+
+  switch (status) {
+    case 'verified':
+      return <CheckCircle size={18} weight="fill" className="text-green-500" />;
+    case 'pending':
+      return <Circle size={18} weight="bold" className="text-yellow-500" />;
+    case 'broken':
+      return <WarningCircle size={18} weight="fill" className="text-red-500" />;
+    default:
+      return <Circle size={18} className="text-gray-500" />;
+  }
+};
+
+
+// ===========================================================================
+// MARK: TreeItem Component (Refactored)
+// ===========================================================================
 
 interface TreeItemProps {
-  node: TreeNode
-  level: number
-  selectedNodeId: string | null
-  onNodeClick: (nodeId: string) => void
+  node: TreeNode;
+  level: number;
+  selectedNodeIds: Set<string>;
+  onNodeClick: (nodeId: string) => void;
 }
 
-function TreeItem({ node, level, selectedNodeId, onNodeClick }: TreeItemProps) {
-  const isGroup = node.category === 'group'
-  const hasChildren = node.children.length > 0
-  const isSelected = selectedNodeId === node.id
+function TreeItem({ node, level, selectedNodeIds, onNodeClick }: TreeItemProps) {
+  // Use local state for expansion, defaulting to true for root-level groups
+  const [isExpanded, setIsExpanded] = useState(node.expanded ?? level === 0);
+  const isSelected = selectedNodeIds.has(node.id);
+  const hasChildren = node.children && node.children.length > 0;
 
-  // Toggle expanded state
-  const toggleExpanded = () => {
-    node.expanded = !node.expanded
-    // Force re-render by updating store (simplified for V1)
-    onNodeClick(node.id) // Just trigger a state update
-  }
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
 
-  // Handle node click
   const handleClick = () => {
-    onNodeClick(node.id)
-  }
+    onNodeClick(node.id);
+  };
 
   return (
-    <div>
-      {/* Node row */}
+    <div className="select-none">
+      {/* Node Row - Styles from Demo */}
       <div
-        className={`flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-colors
-          ${isSelected ? 'bg-indigo-600/20 text-indigo-300' : 'hover:bg-gray-800 text-gray-400'}
-        `}
-        style={{ paddingLeft: `${level * 16 + 8}px` }}
+        className={clsx(
+          'flex items-center py-1.5 px-3 cursor-pointer transition-colors border-l-2',
+          {
+            'bg-blue-900/30 border-blue-500 text-white': isSelected,
+            'hover:bg-gray-800 border-transparent text-gray-300': !isSelected,
+          }
+        )}
+        style={{ paddingLeft: `${level * 20 + 12}px` }}
         onClick={handleClick}
       >
-        {/* Expand/Collapse toggle */}
-        {(isGroup || hasChildren) && (
-          <button
-            className="p-0.5 hover:bg-gray-700 rounded transition-colors"
-            onClick={(e) => {
-              e.stopPropagation()
-              toggleExpanded()
-            }}
-          >
-            {node.expanded ? (
-              <CaretDown size={16} weight="regular" />
-            ) : (
-              <CaretRight size={16} weight="regular" />
-            )}
-          </button>
-        )}
-
-        {/* Type icon */}
-        {isGroup ? (
-          <Folder size={18} weight={isSelected ? "fill" : "regular"} className={isSelected ? 'text-indigo-400' : 'text-gray-500'} />
-        ) : (
-          <File size={18} weight="regular" className={isSelected ? 'text-indigo-400' : 'text-gray-500'} />
-        )}
-
-        {/* Node label */}
-        <span className="text-sm font-medium truncate flex-1">{node.label}</span>
-
-        {/* Status indicator */}
+        {/* Expansion Caret */}
         <div
-          className={`w-2 h-2 rounded-full flex-shrink-0
-            ${node.status === 'verified' ? 'bg-green-500' : ''}
-            ${node.status === 'broken' ? 'bg-red-500' : ''}
-            ${node.status === 'pending' ? 'bg-yellow-500' : ''}
-            ${node.status === 'approved' ? 'bg-blue-500' : ''}
-          `}
-        />
+          className={clsx('mr-2 p-0.5 rounded hover:bg-white/10', {
+            'invisible': !hasChildren, // Reserve space even if no children
+          })}
+          onClick={handleToggle}
+        >
+          {isExpanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
+        </div>
 
-        {/* Child count for groups */}
-        {isGroup && (
-          <span className="text-xs text-gray-600 font-mono">
-            {node.children.length}
-          </span>
-        )}
+        {/* Status Icon */}
+        <div className="mr-2.5 flex-shrink-0">
+          <StatusIcon status={node.status} category={node.category} />
+        </div>
+
+        {/* Node Label */}
+        <span className={clsx('text-sm truncate', { 'font-medium': isSelected, 'font-normal': !isSelected })}>
+          {node.label}
+        </span>
       </div>
 
-      {/* Recursive children */}
-      {isGroup && node.expanded && hasChildren && (
+      {/* Recursive Children */}
+      {hasChildren && isExpanded && (
         <div>
           {node.children.map((child) => (
             <TreeItem
               key={child.id}
               node={child}
               level={level + 1}
-              selectedNodeId={selectedNodeId}
+              selectedNodeIds={selectedNodeIds}
               onNodeClick={onNodeClick}
             />
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-// ============================================================================
-// MARK: Main SpecTree Component
-// =============================================================================
+
+// ===========================================================================
+// MARK: Main SpecTree Component (Updated)
+// ===========================================================================
 
 interface SpecTreeProps {
-  nodes: SpecNode[]
-  onNodeClick?: (nodeId: string) => void
+  nodes: SpecNode[];
+  onNodeClick?: (nodeId: string) => void;
 }
 
 export function SpecTree({ nodes, onNodeClick }: SpecTreeProps) {
-  const selectedNodeId = useGraphStore((state) => state.hoveredNodeId) || null
-  const selectNodes = useGraphStore((state) => state.selectNodes)
+  const selectedNodeIds = useGraphStore((state) => state.selectedNodeIds);
+  const selectNodes = useGraphStore((state) => state.selectNodes);
 
-  // Build tree structure from flat nodes
   const tree = useMemo(() => {
-    return buildTree(nodes)
-  }, [nodes])
+    // The buildTree function from useAutoLayout should be used here.
+    // Ensure it correctly transforms flat nodes to a nested structure.
+    return buildTree(nodes);
+  }, [nodes]);
 
   const handleNodeClick = (nodeId: string) => {
-    selectNodes(nodeId)
-
-    // Call external callback if provided (for Host→Guest communication)
+    selectNodes(nodeId);
     if (onNodeClick) {
-      onNodeClick(nodeId)
+      onNodeClick(nodeId);
     }
-  }
+  };
 
   if (nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8">
         <File size={48} weight="thin" className="mb-4 opacity-50" />
-        <p className="text-sm">No nodes to display</p>
-        <p className="text-xs mt-1">Create a spec_graph.json to get started</p>
+        <p className="text-sm">No spec loaded</p>
+        <p className="text-xs mt-1">Open a project to see the spec tree</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -160,10 +164,10 @@ export function SpecTree({ nodes, onNodeClick }: SpecTreeProps) {
           key={node.id}
           node={node}
           level={0}
-          selectedNodeId={selectedNodeId}
+          selectedNodeIds={selectedNodeIds}
           onNodeClick={handleNodeClick}
         />
       ))}
     </div>
-  )
+  );
 }
